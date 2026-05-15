@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>👁️ Examen de la Vista — Joseph</title>
+<style>
+/* =====================================================
+   JUEGO EXAMEN DE VISTA — Tumbling E
+   Archivo completo standalone + formato parche incluido
+   ===================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f5f7fa;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ---- Pantalla principal ---- */
+#vision-wrap {
+  width: 100vw;
+  max-width: 480px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+.v-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.v-btn-back {
+  background: none; border: none; font-size: 22px; cursor: pointer;
+  padding: 4px 8px; border-radius: 8px; color: #888;
+  transition: background .15s;
+}
+.v-btn-back:active { background: #f0f0f0; }
+
+.v-title { font-size: 14px; font-weight: 700; color: #333; text-align: center; }
+.v-subtitle { font-size: 11px; color: #aaa; text-align: center; }
+
+/* ---- Nivel dots ---- */
+.v-levels {
+  display: flex;
+  gap: 7px;
+  padding: 12px 0 8px;
+  flex-shrink: 0;
+}
+
+.v-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #e0e0e0;
+  transition: background .3s, transform .2s;
+}
+.v-dot.active { background: #4A90D9; transform: scale(1.3); }
+.v-dot.done { background: #4CAF50; }
+
+/* ---- Zona del optotipo ---- */
+.v-chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  padding: 0 20px;
+}
+
+/* Fondo tipo sala de examen */
+.v-chart::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, #fafafa 60%, #f0f0f0 100%);
+  z-index: 0;
+}
+
+.v-optotype-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 200px;
+}
+
+/* La E — dibujada como SVG inline para máxima nitidez */
+.v-e-container {
+  transition: transform .12s ease, opacity .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.v-e-container.flash-ok  { animation: vFlashOk  .35s ease; }
+.v-e-container.flash-err { animation: vFlashErr .35s ease; }
+
+@keyframes vFlashOk  { 0%{opacity:1} 40%{opacity:.4;filter:drop-shadow(0 0 12px #4CAF50)} 100%{opacity:1} }
+@keyframes vFlashErr { 0%{opacity:1} 40%{opacity:.4;filter:drop-shadow(0 0 12px #E53935)} 100%{opacity:1} }
+
+/* ---- Feedback ---- */
+.v-feedback {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  font-weight: 700;
+  min-height: 28px;
+  text-align: center;
+  margin-top: 8px;
+  transition: color .2s, opacity .2s;
+}
+
+/* ---- Progreso de la ronda ---- */
+.v-round-dots {
+  position: relative; z-index: 1;
+  display: flex; gap: 8px; margin-top: 10px;
+}
+
+.v-rdot {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid #ddd; background: transparent;
+  transition: background .2s, border-color .2s;
+}
+.v-rdot.ok  { background: #4CAF50; border-color: #4CAF50; }
+.v-rdot.err { background: #E53935; border-color: #E53935; }
+
+/* ---- Botones de dirección ---- */
+.v-arrows {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+}
+
+.v-arrow {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, background .12s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+}
+.v-arrow:active { transform: scale(.9); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+
+.v-arrow.up    { background: #E3F2FD; color: #1565C0; grid-column: 2; grid-row: 1; }
+.v-arrow.left  { background: #FFF3E0; color: #E65100; grid-column: 1; grid-row: 2; }
+.v-arrow.right { background: #E8F5E9; color: #2E7D32; grid-column: 3; grid-row: 2; }
+.v-arrow.down  { background: #FCE4EC; color: #880E4F; grid-column: 2; grid-row: 3; }
+
+.v-arrow.flash-ok  { animation: vBtnOk  .35s ease; }
+.v-arrow.flash-err { animation: vBtnErr .35s ease; }
+
+@keyframes vBtnOk  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18);background:#4CAF50;color:#fff} }
+@keyframes vBtnErr { 0%,100%{transform:scale(1)} 50%{transform:scale(.88);background:#E53935;color:#fff} }
+
+/* ---- Pantalla de nivel ---- */
+.v-level-screen {
+  position: absolute; inset: 0; background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 20; opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.v-level-screen.show { opacity: 1; pointer-events: all; }
+.v-level-n { font-size: 80px; font-weight: 900; color: #4A90D9; line-height: 1; }
+.v-level-lbl { font-size: 18px; color: #888; margin-top: 4px; }
+.v-level-hint { font-size: 13px; color: #bbb; margin-top: 12px; }
+
+/* ---- Pantalla de resultado ---- */
+.v-result-screen {
+  position: absolute; inset: 0; background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  z-index: 20; opacity: 0; pointer-events: none;
+  transition: opacity .4s;
+  text-align: center; padding: 32px;
+}
+.v-result-screen.show { opacity: 1; pointer-events: all; }
+.v-result-ico { font-size: 72px; }
+.v-result-title { font-size: 24px; font-weight: 800; color: #333; }
+.v-result-sub { font-size: 15px; color: #888; line-height: 1.6; }
+
+.v-score-grid {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 8px 0;
+}
+.v-score-lv {
+  padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+}
+.v-score-lv.pass { background: #E8F5E9; color: #2E7D32; }
+.v-score-lv.fail { background: #FFEBEE; color: #C62828; }
+
+.v-btn-restart {
+  margin-top: 8px; padding: 14px 36px; border-radius: 14px;
+  background: #4A90D9; color: #fff; border: none;
+  font-family: inherit; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s, transform .1s;
+}
+.v-btn-restart:active { opacity: .85; transform: scale(.97); }
+
+/* ---- Pantalla intro ---- */
+.v-intro-screen {
+  position: absolute; inset: 0; background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  z-index: 20; text-align: center; padding: 28px;
+}
+.v-intro-ico { font-size: 72px; }
+.v-intro-title { font-size: 24px; font-weight: 800; color: #333; }
+.v-intro-sub { font-size: 14px; color: #888; line-height: 1.7; }
+.v-intro-demo { display: flex; gap: 14px; align-items: center; justify-content: center; margin: 8px 0; }
+.v-intro-ex { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: #888; }
+.v-btn-start {
+  padding: 15px 44px; border-radius: 14px;
+  background: #4A90D9; color: #fff; border: none;
+  font-family: inherit; font-size: 17px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s, transform .1s;
+  margin-top: 4px;
+}
+.v-btn-start:active { opacity: .85; transform: scale(.97); }
+
+/* ---- Ojo selector ---- */
+.v-eye-row {
+  display: flex; gap: 10px; margin: 4px 0;
+}
+.v-eye-btn {
+  padding: 9px 20px; border-radius: 10px; border: 2px solid #e0e0e0;
+  background: #fff; font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; color: #666; transition: all .15s;
+}
+.v-eye-btn.active { border-color: #4A90D9; background: #E3F2FD; color: #1565C0; }
+</style>
+</head>
+<body>
+
+<div id="vision-wrap">
+
+  <!-- ═══ INTRO ═══ -->
+  <div class="v-intro-screen" id="v-intro">
+    <div class="v-intro-ico">👁️</div>
+    <div class="v-intro-title">Examen de la Vista</div>
+    <div class="v-intro-sub">
+      Mira la letra y toca la flecha<br>que señala hacia donde apunta la abertura
+    </div>
+
+    <div class="v-intro-demo">
+      <div class="v-intro-ex">
+        <svg width="44" height="44" viewBox="0 0 60 60"><rect x="5" y="5" width="15" height="50" fill="#222"/><rect x="5" y="5" width="40" height="14" fill="#222"/><rect x="5" y="26" width="30" height="13" fill="#222"/><rect x="5" y="41" width="40" height="14" fill="#222"/></svg>
+        <span>→ Derecha</span>
+      </div>
+      <div class="v-intro-ex">
+        <svg width="44" height="44" viewBox="0 0 60 60" style="transform:rotate(180deg)"><rect x="5" y="5" width="15" height="50" fill="#222"/><rect x="5" y="5" width="40" height="14" fill="#222"/><rect x="5" y="26" width="30" height="13" fill="#222"/><rect x="5" y="41" width="40" height="14" fill="#222"/></svg>
+        <span>← Izquierda</span>
+      </div>
+      <div class="v-intro-ex">
+        <svg width="44" height="44" viewBox="0 0 60 60" style="transform:rotate(-90deg)"><rect x="5" y="5" width="15" height="50" fill="#222"/><rect x="5" y="5" width="40" height="14" fill="#222"/><rect x="5" y="26" width="30" height="13" fill="#222"/><rect x="5" y="41" width="40" height="14" fill="#222"/></svg>
+        <span>↑ Arriba</span>
+      </div>
+      <div class="v-intro-ex">
+        <svg width="44" height="44" viewBox="0 0 60 60" style="transform:rotate(90deg)"><rect x="5" y="5" width="15" height="50" fill="#222"/><rect x="5" y="5" width="40" height="14" fill="#222"/><rect x="5" y="26" width="30" height="13" fill="#222"/><rect x="5" y="41" width="40" height="14" fill="#222"/></svg>
+        <span>↓ Abajo</span>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:#bbb;">¿Qué ojo vamos a examinar?</div>
+    <div class="v-eye-row">
+      <button class="v-eye-btn active" id="btn-ojo-izq" onclick="setOjo('izquierdo')">👁️ Ojo izquierdo</button>
+      <button class="v-eye-btn" id="btn-ojo-der" onclick="setOjo('derecho')">👁️ Ojo derecho</button>
+      <button class="v-eye-btn" id="btn-ojo-amb" onclick="setOjo('ambos')">👀 Ambos</button>
+    </div>
+
+    <button class="v-btn-start" onclick="visionStart()">¡Comenzar! 👁️</button>
+  </div>
+
+  <!-- ═══ PANTALLA NIVEL ═══ -->
+  <div class="v-level-screen" id="v-level-screen">
+    <div class="v-level-n" id="v-level-n">1</div>
+    <div class="v-level-lbl">Nivel</div>
+    <div class="v-level-hint" id="v-level-hint">Letras muy grandes</div>
+  </div>
+
+  <!-- ═══ RESULTADO ═══ -->
+  <div class="v-result-screen" id="v-result">
+    <div class="v-result-ico" id="v-res-ico">🎉</div>
+    <div class="v-result-title" id="v-res-title">¡Examen completado!</div>
+    <div class="v-result-sub" id="v-res-sub"></div>
+    <div class="v-score-grid" id="v-score-grid"></div>
+    <button class="v-btn-restart" onclick="visionRestart()">Examinar otro ojo →</button>
+  </div>
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="v-header">
+    <button class="v-btn-back" onclick="visionBackToIntro()">←</button>
+    <div>
+      <div class="v-title" id="v-header-title">Examen de la Vista</div>
+      <div class="v-subtitle" id="v-header-sub">Ojo izquierdo</div>
+    </div>
+    <div style="width:40px"></div>
+  </div>
+
+  <!-- Dots de nivel -->
+  <div class="v-levels" id="v-level-dots"></div>
+
+  <!-- ═══ ZONA OPTOTIPO ═══ -->
+  <div class="v-chart">
+    <div class="v-optotype-wrap">
+      <div class="v-e-container" id="v-e-con">
+        <!-- SVG E se inserta por JS -->
+      </div>
+    </div>
+    <div class="v-feedback" id="v-feedback"></div>
+    <div class="v-round-dots" id="v-round-dots"></div>
+  </div>
+
+  <!-- ═══ BOTONES DIRECCIÓN ═══ -->
+  <div class="v-arrows">
+    <button class="v-arrow up"    id="v-btn-up"    onclick="visionAnswer('up')">↑</button>
+    <button class="v-arrow left"  id="v-btn-left"  onclick="visionAnswer('left')">←</button>
+    <button class="v-arrow right" id="v-btn-right" onclick="visionAnswer('right')">→</button>
+    <button class="v-arrow down"  id="v-btn-down"  onclick="visionAnswer('down')">↓</button>
+  </div>
+
+</div><!-- /vision-wrap -->
+
+<script>
+/* =====================================================
+   CONFIGURACIÓN DE AUDIO
+   Cuando tengas los audios en GitHub Pages, cambia
+   AUDIO_BASE a tu URL:
+   const AUDIO_BASE = 'https://tunombre.github.io/audios-joseph/';
+   
+   Por ahora usa voz del sistema (sin archivos necesarios)
+   ===================================================== */
+const AUDIO_BASE = 'https://josue7788.github.io/audios-joseph/';
+
+const AUDIO_KEYS = {
+  intro:       'vision_intro',
+  correcto:    'vision_correcto',
+  incorrecto:  'vision_incorrecto',
+  arriba:      'vision_arriba',
+  abajo:       'vision_abajo',
+  izquierda:   'vision_izquierda',
+  derecha:     'vision_derecha',
+  nivel:       'vision_nivel',
+  excelente:   'vision_excelente',
+  bien:        'vision_bien',
+  revisar:     'vision_revisar',
+};
+
+/* Mensajes fijos */
+const AUDIO_TEXTS = {
+  vision_intro:     '¡Hola Joseph! Mira la letra y toca la flecha hacia donde apunta.',
+  vision_arriba:    'Arriba',
+  vision_abajo:     'Abajo',
+  vision_izquierda: 'Izquierda',
+  vision_derecha:   'Derecha',
+  vision_nivel:     'Siguiente nivel',
+  vision_excelente: '¡Excelente trabajo Joseph! ¡Tu vista está muy bien!',
+  vision_bien:      '¡Muy bien Joseph!',
+  vision_revisar:   'Algunos niveles fueron difíciles. Es bueno visitar al doctor.',
+  /* Mensajes aleatorios OK */
+  vision_ok_1: '¡Correcto Joseph!',
+  vision_ok_2: '¡Muy bien Joseph!',
+  vision_ok_3: '¡Vas muy bien Joseph!',
+  vision_ok_4: '¡Sigue así Joseph!',
+  vision_ok_5: '¡Eres el mejor Joseph!',
+  vision_ok_6: '¡Wiii, lo lograste!',
+  vision_ok_7: '¡Excelente trabajo Joseph!',
+  vision_ok_8: '¡Así se hace Joseph!',
+  /* Mensajes aleatorios error */
+  vision_err_1: '¡Ohh, fallaste! Pero vuelve a intentarlo.',
+  vision_err_2: 'Inténtalo de nuevo Joseph.',
+  vision_err_3: '¡Tú puedes! Solo inténtalo de nuevo.',
+  vision_err_4: '¡Otra oportunidad, otra oportunidad!',
+  vision_err_5: 'No te rindas Joseph, vuelve a intentarlo.',
+  vision_err_6: 'Casi Joseph. ¡Tú puedes!',
+};
+
+const KEYS_OK  = ['vision_ok_1','vision_ok_2','vision_ok_3','vision_ok_4','vision_ok_5','vision_ok_6','vision_ok_7','vision_ok_8'];
+const KEYS_ERR = ['vision_err_1','vision_err_2','vision_err_3','vision_err_4','vision_err_5','vision_err_6'];
+
+let lastOkIdx = -1, lastErrIdx = -1;
+const audioCache = {};
+
+function pickKey(arr, lastIdx) {
+  let idx;
+  do { idx = Math.floor(Math.random() * arr.length); } while (idx === lastIdx && arr.length > 1);
+  return { key: arr[idx], idx };
+}
+
+function vPlay(key) {
+  if (AUDIO_BASE) {
+    try {
+      if (!audioCache[key]) {
+        audioCache[key] = new Audio(AUDIO_BASE + key + '.webm');
+        audioCache[key].onerror = () => vSpeak(AUDIO_TEXTS[key] || key);
+      }
+      audioCache[key].currentTime = 0;
+      audioCache[key].play().catch(() => vSpeak(AUDIO_TEXTS[key] || key));
+    } catch(e) { vSpeak(AUDIO_TEXTS[key] || key); }
+  } else {
+    vSpeak(AUDIO_TEXTS[key] || key);
+  }
+}
+
+function vPlayOk() {
+  const { key, idx } = pickKey(KEYS_OK, lastOkIdx);
+  lastOkIdx = idx;
+  vPlay(key);
+}
+
+function vPlayErr() {
+  const { key, idx } = pickKey(KEYS_ERR, lastErrIdx);
+  lastErrIdx = idx;
+  vPlay(key);
+}
+
+function vSpeak(text) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-ES'; u.rate = 0.88; u.pitch = 1.05;
+  speechSynthesis.speak(u);
+}
+
+/* =====================================================
+   CONFIG DEL JUEGO
+   ===================================================== */
+const LEVELS = [
+  { size: 180, label: 'Letras muy grandes', questions: 5 },
+  { size: 130, label: 'Letras grandes',      questions: 5 },
+  { size: 90,  label: 'Letras medianas',     questions: 5 },
+  { size: 60,  label: 'Letras pequeñas',     questions: 5 },
+  { size: 38,  label: 'Letras muy pequeñas', questions: 5 },
+];
+
+const DIRS = ['right','left','up','down'];
+const DIR_LABELS = { right:'Derecha', left:'Izquierda', up:'Arriba', down:'Abajo' };
+const DIR_ARROWS = { right:'→', left:'←', up:'↑', down:'↓' };
+// rotation for each direction (E normal = right)
+const DIR_ROT = { right:0, left:180, up:-90, down:90 };
+const DIR_AUDIO = { right:'vision_derecha', left:'vision_izquierda', up:'vision_arriba', down:'vision_abajo' };
+
+let state = {
+  ojo: 'izquierdo',
+  level: 0,
+  question: 0,
+  current: 'right',
+  results: [],  // per level: { pass: bool, correct: n, total: n }
+  roundResults: [], // current round answers
+  locked: false,
+};
+
+/* =====================================================
+   INTRO / OJO
+   ===================================================== */
+function setOjo(ojo) {
+  state.ojo = ojo;
+  document.querySelectorAll('.v-eye-btn').forEach(b => b.classList.remove('active'));
+  const map = { izquierdo:'btn-ojo-izq', derecho:'btn-ojo-der', ambos:'btn-ojo-amb' };
+  document.getElementById(map[ojo]).classList.add('active');
+}
+
+/* =====================================================
+   START
+   ===================================================== */
+function visionStart() {
+  document.getElementById('v-intro').style.display = 'none';
+  state.level = 0;
+  state.results = [];
+  document.getElementById('v-header-sub').textContent =
+    state.ojo === 'ambos' ? 'Ambos ojos' : 'Ojo ' + state.ojo;
+  buildLevelDots();
+  showLevel();
+}
+
+function showLevel() {
+  const ls = document.getElementById('v-level-screen');
+  const lv = LEVELS[state.level];
+  document.getElementById('v-level-n').textContent = state.level + 1;
+  document.getElementById('v-level-hint').textContent = lv.label;
+  ls.classList.add('show');
+  vPlay('vision_nivel');
+  setTimeout(() => {
+    ls.classList.remove('show');
+    startLevel();
+  }, 1600);
+}
+
+function startLevel() {
+  state.question = 0;
+  state.roundResults = [];
+  buildRoundDots();
+  updateLevelDots();
+  nextQuestion();
+}
+
+/* =====================================================
+   PREGUNTAS
+   ===================================================== */
+function nextQuestion() {
+  if (state.locked) return;
+  // random direction
+  state.current = DIRS[Math.floor(Math.random() * DIRS.length)];
+  renderE();
+  document.getElementById('v-feedback').textContent = '';
+  document.getElementById('v-feedback').style.color = '#333';
+}
+
+function renderE() {
+  const sz = LEVELS[state.level].size;
+  const rot = DIR_ROT[state.current];
+  const con = document.getElementById('v-e-con');
+
+  // Build SVG E with proper proportions (3:4 ratio, 3 bars, equal spacing)
+  const W = sz * 0.75, H = sz;
+  const bar = H * 0.175;   // bar thickness
+  const mid = W * 0.75;    // middle bar shorter
+  const spine = W * 0.25;  // vertical spine
+
+  const svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="${spine}" height="${H}" fill="#111"/>
+    <rect x="0" y="0" width="${W}" height="${bar}" fill="#111"/>
+    <rect x="0" y="${(H-bar)/2}" width="${mid}" height="${bar}" fill="#111"/>
+    <rect x="0" y="${H-bar}" width="${W}" height="${bar}" fill="#111"/>
+  </svg>`;
+
+  con.innerHTML = svg;
+  con.style.transform = `rotate(${rot}deg)`;
+  con.classList.remove('flash-ok','flash-err');
+}
+
+/* =====================================================
+   RESPUESTA
+   ===================================================== */
+function visionAnswer(dir) {
+  if (state.locked) return;
+  state.locked = true;
+
+  const correct = dir === state.current;
+  const con = document.getElementById('v-e-con');
+  const btn = document.getElementById('v-btn-' + dir);
+  const fb = document.getElementById('v-feedback');
+
+  // Primero dice la dirección presionada, luego correcto/incorrecto
+  vPlay(DIR_AUDIO[dir]);
+
+  if (correct) {
+    con.classList.add('flash-ok');
+    btn.classList.add('flash-ok');
+    fb.style.color = '#2E7D32';
+    fb.textContent = '¡Correcto! ' + DIR_ARROWS[dir];
+    setTimeout(() => vPlayOk(), 600);
+    state.roundResults.push(true);
+  } else {
+    con.classList.add('flash-err');
+    btn.classList.add('flash-err');
+    // show correct answer
+    const corrBtn = document.getElementById('v-btn-' + state.current);
+    corrBtn.classList.add('flash-ok');
+    fb.style.color = '#C62828';
+    fb.textContent = 'Era ' + DIR_ARROWS[state.current] + ' ' + DIR_LABELS[state.current];
+    setTimeout(() => vPlayErr(), 600);
+    state.roundResults.push(false);
+    setTimeout(() => corrBtn.classList.remove('flash-ok'), 400);
+  }
+
+  updateRoundDot(state.question, correct);
+  state.question++;
+
+  setTimeout(() => {
+    btn.classList.remove('flash-ok','flash-err');
+    con.classList.remove('flash-ok','flash-err');
+    state.locked = false;
+
+    const total = LEVELS[state.level].questions;
+    if (state.question >= total) {
+      // level done
+      const correctCount = state.roundResults.filter(Boolean).length;
+      const pass = correctCount >= Math.ceil(total * 0.7); // 70% to pass
+      state.results.push({ pass, correct: correctCount, total });
+      setTimeout(() => advanceLevel(), 500);
+    } else {
+      nextQuestion();
+    }
+  }, 900);
+}
+
+/* =====================================================
+   AVANZAR NIVEL
+   ===================================================== */
+function advanceLevel() {
+  state.level++;
+  updateLevelDots();
+  if (state.level >= LEVELS.length) {
+    showResult();
+  } else {
+    showLevel();
+  }
+}
+
+/* =====================================================
+   RESULTADO FINAL
+   ===================================================== */
+function showResult() {
+  const rs = document.getElementById('v-result');
+  const passedAll = state.results.every(r => r.pass);
+  const passedMost = state.results.filter(r => r.pass).length >= 3;
+
+  let ico, title, sub;
+  if (passedAll) {
+    ico = '🎉'; title = '¡Vista excelente!';
+    sub = 'Joseph identificó correctamente todos los niveles. ¡Su vista está muy bien!';
+    vPlay('vision_excelente');
+  } else if (passedMost) {
+    ico = '👍'; title = '¡Muy bien!';
+    sub = 'Joseph superó la mayoría de los niveles. Algunos niveles pequeños fueron difíciles.';
+    vPlay('vision_bien');
+  } else {
+    ico = '🔍'; title = 'Revisión recomendada';
+    sub = 'Algunos niveles fueron complicados. Podría ser bueno hacer una visita al optometrista.';
+    vPlay('vision_revisar');
+  }
+
+  document.getElementById('v-res-ico').textContent = ico;
+  document.getElementById('v-res-title').textContent = title;
+  document.getElementById('v-res-sub').textContent = sub;
+
+  const grid = document.getElementById('v-score-grid');
+  grid.innerHTML = state.results.map((r,i) =>
+    `<div class="v-score-lv ${r.pass?'pass':'fail'}">
+      Nivel ${i+1}: ${r.correct}/${r.total} ${r.pass?'✓':'✗'}
+    </div>`
+  ).join('');
+
+  rs.classList.add('show');
+}
+
+/* =====================================================
+   NAVEGACIÓN
+   ===================================================== */
+function visionRestart() {
+  document.getElementById('v-result').classList.remove('show');
+  document.getElementById('v-intro').style.display = 'flex';
+}
+
+function visionBackToIntro() {
+  document.getElementById('v-result').classList.remove('show');
+  document.getElementById('v-level-screen').classList.remove('show');
+  document.getElementById('v-intro').style.display = 'flex';
+  state.locked = false;
+}
+
+/* =====================================================
+   UI HELPERS
+   ===================================================== */
+function buildLevelDots() {
+  const el = document.getElementById('v-level-dots');
+  el.innerHTML = LEVELS.map((_,i) => `<div class="v-dot" id="v-ldot-${i}"></div>`).join('');
+}
+
+function updateLevelDots() {
+  LEVELS.forEach((_,i) => {
+    const d = document.getElementById('v-ldot-'+i);
+    if (!d) return;
+    d.classList.remove('active','done');
+    if (i < state.level) d.classList.add('done');
+    else if (i === state.level) d.classList.add('active');
+  });
+}
+
+function buildRoundDots() {
+  const el = document.getElementById('v-round-dots');
+  const total = LEVELS[state.level].questions;
+  el.innerHTML = Array.from({length:total},(_,i) =>
+    `<div class="v-rdot" id="v-rdot-${i}"></div>`).join('');
+}
+
+function updateRoundDot(idx, ok) {
+  const d = document.getElementById('v-rdot-'+idx);
+  if (d) d.classList.add(ok?'ok':'err');
+}
+
+/* =====================================================
+   INIT
+   ===================================================== */
+buildLevelDots();
+// show intro, hide game elements
+document.getElementById('v-level-screen').classList.remove('show');
+document.getElementById('v-result').classList.remove('show');
+</script>
+</body>
+</html>

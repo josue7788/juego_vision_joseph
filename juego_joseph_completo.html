@@ -956,15 +956,15 @@ function dShowMicResult(correct, p) {
   if (correct) {
     fb.style.color = '#1a9e6f';
     fb.textContent = MSGS_D_OK[Math.floor(Math.random()*MSGS_D_OK.length)];
-    speak(fb.textContent);
+    dPlayOk();
     dState.results.push({ w: p.w, ok: true, hintUsed: dState.hintUsed });
     document.getElementById('d-btn-skip').style.display = 'none';
     document.getElementById('d-btn-next').style.display = 'block';
     document.getElementById('d-mic-btn').disabled = true;
   } else {
     fb.style.color = '#c62828';
-    fb.textContent = 'No se entendió bien. ¡Inténtalo de nuevo!';
-    speak('No se entendió bien. Inténtalo de nuevo.');
+    fb.textContent = '¡No se entendió bien, inténtalo de nuevo!';
+    dPlayErr();
     const btn = document.getElementById('d-mic-btn');
     btn.className = 'd-mic-btn';
     btn.textContent = '🎙️ Toca para hablar';

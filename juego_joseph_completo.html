@@ -320,6 +320,8 @@ body{
   padding:6px 14px;border-radius:10px;background:#f5f5f5;
   width:100%;
 }
+/* Hint */
+.d-hint{
   font-size:13px;color:#aaa;cursor:pointer;text-decoration:underline;
   text-underline-offset:3px;
 }
@@ -416,12 +418,14 @@ body{
           onkeydown="if(event.key==='Enter')dCheck()">
       </div>
 
-      <!-- MODO DICTADO: botón micrófono -->
+      <!-- MODO VER: botón micrófono para repetir la palabra -->
       <div id="d-mic-wrap" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
-        <button class="d-mic-btn" id="d-mic-btn" onclick="dToggleMic()">
+        <button class="d-mic-btn" id="d-mic-btn" onclick="dToggleMic();event.stopPropagation();">
           🎙️ Toca para hablar
         </button>
-        <div class="d-mic-result" id="d-mic-result">—</div>
+        <!-- Lo que escuchó — debajo del botón, sin superponerse -->
+        <div style="font-size:11px;color:#aaa;margin-top:-4px;">Lo que escuché:</div>
+        <div class="d-mic-result" id="d-mic-result" style="min-height:36px;font-size:18px;">—</div>
       </div>
 
       <!-- Hint -->
@@ -762,6 +766,9 @@ function renderDWord() {
   document.getElementById('d-mic-result').textContent = '—';
   dStopMic();
 
+  // En modo ver: la palabra se muestra ARRIBA, el micrófono ABAJO — no hay superposición
+  // La palabra visible ya está controlada por wordDisplay arriba
+
   // Hint — en escribir y dictado
   const hint = document.getElementById('d-hint');
   hint.style.display = (mode === 'escribir' || mode === 'dictado') ? 'block' : 'none';
@@ -770,9 +777,9 @@ function renderDWord() {
   // Feedback
   document.getElementById('d-feedback').textContent = '';
 
-  // Botones
+  // Botones — verificar oculto solo en modo ver
   document.getElementById('d-btn-check').style.display =
-    (mode === 'ver' || mode === 'armar') ? 'none' : 'block';
+    mode === 'ver' ? 'none' : 'block';
   document.getElementById('d-btn-next').style.display = 'none';
   document.getElementById('d-btn-skip').style.display = 'block';
 
@@ -1079,6 +1086,8 @@ function showDResult() {
 document.getElementById('d-card').addEventListener('click', function(e) {
   if (dState.mode === 'ver' &&
       !e.target.closest('.d-listen-btn') &&
+      !e.target.closest('.d-mic-btn') &&
+      !e.target.closest('#d-mic-wrap') &&
       !e.target.closest('.d-btn-check') &&
       !e.target.closest('.d-btn-next') &&
       !e.target.closest('.d-btn-skip')) {
